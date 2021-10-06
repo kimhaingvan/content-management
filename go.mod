@@ -1,4 +1,4 @@
-module cms-project
+module content-management
 
 go 1.16
 

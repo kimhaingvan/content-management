@@ -1,7 +1,7 @@
 package driver
 
 import (
-	"cms-project/pkg/integration/storage/s3/client"
+	"content-management/pkg/integration/storage/s3/client"
 	"context"
 	"mime/multipart"
 )

@@ -6,9 +6,9 @@
 package build
 
 import (
-	"cms-project/cmd/content-server/config"
-	"cms-project/pkg/application"
-	"cms-project/pkg/database"
+	"content-management/cmd/content-server/config"
+	"content-management/pkg/application"
+	"content-management/pkg/database"
 )
 
 // Injectors from wire.go:

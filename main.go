@@ -1,10 +1,11 @@
 package main
 
 import (
-	"cms-project/app/order"
-	"cms-project/cmd/content-server/build"
-	"cms-project/cmd/content-server/config"
-	"cms-project/pkg/cmenv"
+	"content-management/app/order"
+	"content-management/cmd/content-server/build"
+	"content-management/cmd/content-server/config"
+	"content-management/pkg/application"
+	"content-management/pkg/cmenv"
 	"context"
 	"fmt"
 	"log"
@@ -24,26 +25,34 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	registerApp(cfg, app.App)
+	s := &http.Server{
+		Addr:    fmt.Sprintf(":%v", cfg.Port),
+		Handler: app.App.NewServeMux(),
+	}
+	go func() {
+		fmt.Println("HTTP server content management listening on %v", s.Addr)
+		err = s.ListenAndServe()
+		switch err {
+		case nil, http.ErrServerClosed:
+			err = nil
+		default:
+			fmt.Errorf("HTTP server content management error: %v", err)
+		}
+	}()
 
-	app.App.Use(order.New(&order.Config{
+	// Gracefully shutdown
+	shutdownGracefully(s)
+}
+
+func registerApp(cfg *config.Config, app *application.Application) {
+	app.Use(order.New(&order.Config{
 		Prefix:             "",
 		AwsS3Region:        cfg.S3.AwsS3Region,
 		AwsS3Bucket:        cfg.S3.AwsS3Bucket,
 		AwsAccessKey:       cfg.S3.AwsAccessKey,
 		AwsSecretAccessKey: cfg.S3.AwsSecretAccessKey,
 	}))
-	s := &http.Server{
-		Addr:    fmt.Sprintf(":%v", cfg.Port),
-		Handler: app.App.NewServeMux(),
-	}
-	go func() {
-		if err = s.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("listen: %s\n", err)
-		}
-	}()
-
-	// Gracefully shutdown
-	shutdownGracefully(s)
 }
 
 func shutdownGracefully(s *http.Server) {

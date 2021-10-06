@@ -1,12 +1,12 @@
 package order
 
 import (
-	"cms-project/app/order/controller"
-	"cms-project/app/order/model"
-	"cms-project/pkg/application"
-	"cms-project/pkg/integration/storage/s3/client"
-	"cms-project/pkg/integration/storage/s3/driver"
-	"cms-project/pkg/utils/funcmapmaker"
+	"content-management/app/order/controller"
+	"content-management/app/order/model"
+	"content-management/pkg/application"
+	"content-management/pkg/integration/storage/s3/client"
+	"content-management/pkg/integration/storage/s3/driver"
+	"content-management/pkg/utils/funcmapmaker"
 
 	"github.com/qor/admin"
 	"github.com/qor/render"
@@ -52,7 +52,7 @@ type Config struct {
 // ConfigureApplication configure application
 func (app *OrderMicroApp) ConfigureApplication(application *application.Application) {
 	// ViewPaths tính từ file main.go
-	app.Controller.View = render.New(&render.Config{AssetFileSystem: application.AssetFS.NameSpace("orders")}, "./../../app/order/views")
+	app.Controller.View = render.New(&render.Config{AssetFileSystem: application.AssetFS.NameSpace("orders")}, "app/order/views")
 	funcmapmaker.AddFuncMapMaker(app.Controller.View)
 	admin := application.Admin
 	app.ConfigureAdmin(application.Admin)

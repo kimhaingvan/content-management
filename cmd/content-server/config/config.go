@@ -1,7 +1,7 @@
 package config
 
 import (
-	"cms-project/pkg/redis"
+	"content-management/pkg/redis"
 	"flag"
 	"io/ioutil"
 	"log"
@@ -56,7 +56,7 @@ func DefaultPostgres() ConfigPostgres {
 		Port:           5432,
 		Username:       "postgres",
 		Password:       "postgres",
-		Database:       "hapo_postgres",
+		Database:       "cms_postgres",
 		SSLMode:        "disable",
 		Timeout:        15,
 		GoogleAuthFile: "",

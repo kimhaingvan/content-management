@@ -1,21 +1,22 @@
 version: "3.9"
 
 services:
-  cms_server:
-    container_name: cms_server
+  server:
+    container_name: maf_server
     build:
       context: .
       dockerfile: Dockerfile
+    env_file: .env
     ports:
       - 8080:8080
     depends_on:
       - postgres
     networks: ["go_develop"]
   postgres:
-    container_name: cms_postgres
+    container_name: maf_postgres
     image: postgres:12
     environment:
-      - POSTGRES_DB=cms_postgres
+      - POSTGRES_DB=content_postgres
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
     ports:

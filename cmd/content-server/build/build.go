@@ -1,8 +1,9 @@
 package build
 
 import (
-	"cms-project/pkg/application"
-	"cms-project/pkg/database"
+	"content-management/pkg/application"
+	"content-management/pkg/database"
+
 	"github.com/go-chi/chi"
 	"github.com/qor/admin"
 	"github.com/qor/publish2"

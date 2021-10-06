@@ -1,10 +1,10 @@
 postgres:
   protocol: ""
-  host: localhost
+  host: host.docker.internal
   port: 5432
   username: postgres
   password: postgres
-  database: cms_postgres
+  database: postgres
   sslmode: disable
   timeout: 15
   max_open_conns: 0

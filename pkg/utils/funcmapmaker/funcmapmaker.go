@@ -1,7 +1,7 @@
 package funcmapmaker
 
 import (
-	"cms-project/pkg/utils"
+	"content-management/pkg/utils"
 	"html/template"
 	"net/http"
 
