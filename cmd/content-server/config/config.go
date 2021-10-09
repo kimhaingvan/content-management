@@ -2,20 +2,12 @@ package config
 
 import (
 	"content-management/pkg/redis"
-	"flag"
-	"io/ioutil"
-	"log"
+	"fmt"
 	"os"
-	"reflect"
+
+	consulAPI "github.com/hashicorp/consul/api"
 
 	"gopkg.in/yaml.v2"
-)
-
-var (
-	flConfigFile = ""
-	flConfigYaml = ""
-	flExample    = false
-	flNoEnv      = false
 )
 
 // Config ...
@@ -83,57 +75,6 @@ type S3 struct {
 	AwsSessionToken    string `yaml:"aws_session_token"`
 }
 
-func LoadWithDefault(v, def interface{}) (err error) {
-	defer func() {
-		if flExample {
-			if err != nil {
-				//ll.Fatal("Error while loading config", l.Error(err))
-			}
-			//PrintExample(v)
-			os.Exit(2)
-		}
-	}()
-	if (flConfigFile != "") && (flConfigYaml != "") {
-		//return errors.New("must provide only -config-file or -config-yaml")
-	}
-	if flConfigFile != "" {
-		err = LoadFromFile(flConfigFile, v)
-		if err != nil {
-			log.Fatal("can not load config from file: %v (%v)", flConfigFile, err)
-		}
-		return err
-	}
-	if flConfigYaml != "" {
-		return LoadFromYaml([]byte(flConfigYaml), v)
-	}
-	reflect.ValueOf(v).Elem().Set(reflect.ValueOf(def))
-	return nil
-}
-
-// LoadFromFile loads config from file
-func LoadFromFile(configPath string, v interface{}) (err error) {
-	data, err := ioutil.ReadFile(configPath)
-	if err != nil {
-		return err
-	}
-	return LoadFromYaml(data, v)
-}
-
-func LoadFromYaml(input []byte, v interface{}) (err error) {
-	return yaml.Unmarshal(input, v)
-}
-
-func InitFlags() {
-	flag.StringVar(&flConfigFile, "config-file", "server_config.yaml", "Path to config file")
-	flag.StringVar(&flConfigYaml, "config-yaml", "", "Config as yaml string")
-	flag.BoolVar(&flNoEnv, "no-env", false, "Don't read config from environment")
-	flag.BoolVar(&flExample, "example", false, "Print example config then exit")
-}
-
-func ParseFlags() {
-	flag.Parse()
-}
-
 // Default ...
 func Default() Config {
 	cfg := Config{
@@ -149,12 +90,16 @@ func Default() Config {
 }
 
 // Load loads config from file
-func Load() (Config, error) {
-	var cfg, defCfg Config
-	defCfg = Default()
-	err := LoadWithDefault(&cfg, defCfg)
+func LoadCfgFromConsul(addr, port string) (Config, error) {
+	consulCfg := consulAPI.DefaultConfig()
+	consulCfg.Address = fmt.Sprintf("%v:%v", addr, port)
+	consulClient, err := consulAPI.NewClient(consulCfg)
+	kv := consulClient.KV()
+	pair, _, err := kv.Get(os.Getenv("CONSUL_CONFIG_KEY_VALUE"), nil)
 	if err != nil {
-		return cfg, err
+		panic(err)
 	}
+	var cfg Config
+	err = yaml.Unmarshal(pair.Value, &cfg)
 	return cfg, err
 }

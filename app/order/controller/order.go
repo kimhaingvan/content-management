@@ -13,10 +13,8 @@ type Controller struct {
 	S3Driver *driver.S3Driver
 }
 
-// Cart shopping cart
 func (c *Controller) ExtraFunc(w http.ResponseWriter, req *http.Request) {
 	req.ParseMultipartForm(10 << 20)
-
 	// Get a file from the form input name "file"
 	file, header, err := req.FormFile("file")
 	if err != nil {

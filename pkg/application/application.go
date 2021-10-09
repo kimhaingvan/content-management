@@ -1,6 +1,8 @@
 package application
 
 import (
+	"net/http"
+
 	"github.com/go-chi/chi"
 	"github.com/jinzhu/gorm"
 	"github.com/qor/admin"
@@ -8,7 +10,6 @@ import (
 	"github.com/qor/middlewares"
 	"github.com/qor/publish2"
 	"github.com/qor/wildcard_router"
-	"net/http"
 )
 
 // MicroAppInterface micro app interface
@@ -57,8 +58,10 @@ func New(config *AppConfig) *Application {
 }
 
 // Use mount router into micro app
-func (application *Application) Use(app MicroAppInterface) {
-	app.ConfigureApplication(application)
+func (application *Application) Use(apps ...MicroAppInterface) {
+	for _, app := range apps {
+		app.ConfigureApplication(application)
+	}
 }
 
 // NewServeMux allocates and returns a new ServeMux.

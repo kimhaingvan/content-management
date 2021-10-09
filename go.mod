@@ -11,12 +11,16 @@ require (
 	github.com/gin-gonic/gin v1.7.4 // indirect
 	github.com/go-chi/chi v1.5.4
 	github.com/google/wire v0.5.0
+	github.com/hashicorp/consul/api v1.11.0 // indirect
+	github.com/hashicorp/go.net v0.0.1 // indirect
 	github.com/jinzhu/gorm v1.9.16
 	github.com/jinzhu/now v1.1.2 // indirect
 	github.com/k0kubun/colorstring v0.0.0-20150214042306-9440f1994b88 // indirect
 	github.com/k0kubun/pp v3.0.1+incompatible
 	github.com/lib/pq v1.10.2 // indirect
 	github.com/microcosm-cc/bluemonday v1.0.3
+	github.com/mitchellh/gox v0.4.0 // indirect
+	github.com/mitchellh/iochan v1.0.0 // indirect
 	github.com/qor/admin v1.2.0
 	github.com/qor/assetfs v0.0.0-20170713023933-ff57fdc13a14
 	github.com/qor/l10n v0.0.0-20181031091737-2ca95fb3b4dd
