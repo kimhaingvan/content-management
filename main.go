@@ -5,6 +5,7 @@ import (
 	"content-management/cmd/content-server/build"
 	"content-management/cmd/content-server/config"
 	"content-management/pkg/application"
+	intzipkin "content-management/pkg/zipkin"
 	"context"
 	"fmt"
 	"log"
@@ -14,15 +15,21 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/opentracing/opentracing-go"
+
 	"gopkg.in/yaml.v2"
 
 	consulAPI "github.com/hashicorp/consul/api"
 	"github.com/hashicorp/consul/api/watch"
 )
 
+func init() {
+	//go intLog.LogStashRegister()
+}
+
 func main() {
 	var cfgCh = make(chan config.Config, 1)
-	watcher, err := RegisterWatcher("key", os.Getenv("CONSUL_CONFIG_KEY_VALUE"))
+	watcher, err := registerWatcher("key", os.Getenv("CONSUL_CONFIG_KEY_VALUE"))
 	defer watcher.Stop()
 
 	watcher.Handler = func(index uint64, data interface{}) {
@@ -55,7 +62,19 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
+
+		reporter := intzipkin.NewReporter(os.Getenv("ZIPKIN_URL"))
+		defer reporter.Close()
+
+		err = intzipkin.InitTracer(reporter)
+		if err != nil {
+			log.Fatalf("unable to init tracer: %+v\n", err)
+		}
+		// Middlewares
+		app.App.Router.Use(middlewareZipkin)
+
 		configureApp(&cfg, app.App)
+
 		go func() {
 			s = &http.Server{
 				Addr:           fmt.Sprintf(":%v", cfg.Port),
@@ -75,10 +94,21 @@ func main() {
 			shutdownGracefully(s)
 		}()
 	}
-
 }
 
-func RegisterWatcher(key string, valueOfKey string) (watcher *watch.Plan, error error) {
+func middlewareZipkin(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		span := intzipkin.Tracer.StartSpan(r.Method + " " + r.URL.String())
+		defer span.Finish()
+		span.SetTag("Method", r.Method)
+		span.SetTag("URL", r.URL.String())
+		ctx := opentracing.ContextWithSpan(r.Context(), span)
+		r = r.WithContext(ctx)
+		next.ServeHTTP(w, r)
+	})
+}
+
+func registerWatcher(key string, valueOfKey string) (watcher *watch.Plan, error error) {
 	var params = make(map[string]interface{})
 	params["type"] = key
 	params["key"] = valueOfKey
@@ -86,6 +116,7 @@ func RegisterWatcher(key string, valueOfKey string) (watcher *watch.Plan, error 
 	if err != nil {
 		return nil, err
 	}
+
 	return watcher, nil
 }
 

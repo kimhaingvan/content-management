@@ -2,8 +2,10 @@ package controller
 
 import (
 	"content-management/pkg/integration/storage/s3/driver"
-	"context"
+	"content-management/pkg/zipkin"
 	"net/http"
+
+	"github.com/opentracing/opentracing-go"
 
 	"github.com/qor/render"
 )
@@ -13,9 +15,17 @@ type Controller struct {
 	S3Driver *driver.S3Driver
 }
 
-func (c *Controller) ExtraFunc(w http.ResponseWriter, req *http.Request) {
+func (c *Controller) TestFunc(w http.ResponseWriter, req *http.Request) {
+	parentSpan := opentracing.SpanFromContext(req.Context())
+	childSpan := zipkin.Tracer.StartSpan(
+		"child",
+		opentracing.ChildOf(parentSpan.Context()),
+	)
+	defer childSpan.Finish()
+	ctx := opentracing.ContextWithSpan(req.Context(), childSpan)
+
 	req.ParseMultipartForm(10 << 20)
-	// Get a file from the form input name "file"
+	//Get a file from the form input name "file"
 	file, header, err := req.FormFile("file")
 	if err != nil {
 		http.Error(w, "Something went wrong retrieving the file from the form", http.StatusInternalServerError)
@@ -27,7 +37,7 @@ func (c *Controller) ExtraFunc(w http.ResponseWriter, req *http.Request) {
 		FileName: header.Filename,
 	}
 
-	_, err = c.S3Driver.UploadFile(context.Background(), uploadFileArgs)
+	_, err = c.S3Driver.UploadFile(ctx, uploadFileArgs)
 	if err != nil {
 		panic(err)
 	}
