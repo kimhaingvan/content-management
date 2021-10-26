@@ -1,6 +1,7 @@
 package main
 
 import (
+	"content-management/app/media"
 	"content-management/app/order"
 	"content-management/cmd/content-server/build"
 	"content-management/cmd/content-server/config"
@@ -149,6 +150,15 @@ func configureApp(cfg *config.Config, app *application.Application) {
 			AwsS3Bucket:        cfg.S3.AwsS3Bucket,
 			AwsAccessKey:       cfg.S3.AwsAccessKey,
 			AwsSecretAccessKey: cfg.S3.AwsSecretAccessKey,
+		}),
+	)
+	app.Use(
+		media.New(&media.Config{
+			Prefix:          "",
+			Endpoint:        cfg.CMCClound.Endpoint,
+			SecretAccessKey: cfg.CMCClound.SecretAccessKey,
+			AccessKey:       cfg.CMCClound.AccessKey,
+			BucketName:      cfg.CMCClound.BucketName,
 		}),
 	)
 }

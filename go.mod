@@ -20,12 +20,14 @@ require (
 	github.com/k0kubun/pp v3.0.1+incompatible
 	github.com/lib/pq v1.10.2 // indirect
 	github.com/microcosm-cc/bluemonday v1.0.3
+	github.com/minio/minio-go/v7 v7.0.15
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/openzipkin-contrib/zipkin-go-opentracing v0.4.5
 	github.com/openzipkin/zipkin-go v0.2.5
 	github.com/qor/admin v1.2.0
 	github.com/qor/assetfs v0.0.0-20170713023933-ff57fdc13a14
 	github.com/qor/l10n v0.0.0-20181031091737-2ca95fb3b4dd
+	github.com/qor/media v0.0.0-20200720100650-60c52edf57cb
 	github.com/qor/middlewares v0.0.0-20170822143614-781378b69454
 	github.com/qor/publish2 v0.0.0-20200729081509-d97fdb5620a5
 	github.com/qor/qor v0.0.0-20210618082622-a52aba0a0ce1

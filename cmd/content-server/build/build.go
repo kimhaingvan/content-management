@@ -4,7 +4,8 @@ import (
 	"content-management/pkg/application"
 	"content-management/pkg/database"
 
-	"github.com/go-chi/chi"
+	"github.com/gorilla/mux"
+
 	"github.com/qor/admin"
 	"github.com/qor/publish2"
 )
@@ -20,7 +21,7 @@ func buildApplication(db *database.Database) *application.Application {
 		DB: db.DB.Set(publish2.VisibleMode, publish2.ModeOff).Set(publish2.ScheduleMode, publish2.ModeOff),
 	})
 	app := application.New(&application.AppConfig{
-		Router: chi.NewRouter(),
+		Router: mux.NewRouter(),
 		Admin:  admin,
 		DB:     db.DB,
 	})

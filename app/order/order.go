@@ -1,7 +1,7 @@
 package order
 
 import (
-	"content-management/app/order/controller"
+	"content-management/app/order/controler"
 	"content-management/app/order/model"
 	"content-management/pkg/application"
 	"content-management/pkg/integration/storage/s3/client"
@@ -9,6 +9,8 @@ import (
 	"content-management/pkg/utils/funcmapmaker"
 	"errors"
 	"fmt"
+	"net/http"
+	"strings"
 
 	"github.com/qor/qor/resource"
 
@@ -25,7 +27,7 @@ import (
 // New new order app
 func New(config *Config) *OrderMicroApp {
 	if config.Prefix == "" {
-		config.Prefix = "/admin"
+		config.Prefix = "/"
 	}
 	s3Driver := driver.New(client.Config{
 		AwsS3Region:        config.AwsS3Region,
@@ -36,8 +38,8 @@ func New(config *Config) *OrderMicroApp {
 	})
 
 	return &OrderMicroApp{
-		Config: config,
-		Controller: &controller.Controller{
+		config: config,
+		controller: &controler.Controller{
 			S3Driver: s3Driver,
 		},
 	}
@@ -45,8 +47,8 @@ func New(config *Config) *OrderMicroApp {
 
 // App order app
 type OrderMicroApp struct {
-	Config     *Config
-	Controller *controller.Controller
+	config     *Config
+	controller *controler.Controller
 }
 
 // Config order config struct
@@ -62,13 +64,18 @@ type Config struct {
 // ConfigureApplication configure application
 func (app *OrderMicroApp) ConfigureApplication(application *application.Application) {
 	// ViewPaths tính từ file main.go
-	app.Controller.View = render.New(&render.Config{AssetFileSystem: application.AssetFS.NameSpace("orders")}, "app/order/views")
-	funcmapmaker.AddFuncMapMaker(app.Controller.View)
+	app.controller.View = render.New(&render.Config{AssetFileSystem: application.AssetFS.NameSpace("orders")}, "app/order/views")
+	funcmapmaker.AddFuncMapMaker(app.controller.View)
 	admin := application.Admin
 	app.ConfigureAdmin(application.Admin)
+	application.Router.HandleFunc("/TestFunc", app.controller.TestFunc).Methods(http.MethodPost)
 
-	application.Router.Post(app.Config.Prefix+"/TestFunc", app.Controller.TestFunc)
-	application.Router.Mount(app.Config.Prefix, admin.NewServeMux(app.Config.Prefix))
+	application.Router.PathPrefix(app.config.Prefix).Handler(
+		http.StripPrefix(
+			strings.TrimSuffix(app.config.Prefix, "/"),
+			admin.NewServeMux("/"),
+		),
+	)
 }
 
 // ConfigureAdmin configure admin interface

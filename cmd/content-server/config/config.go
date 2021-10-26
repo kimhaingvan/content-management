@@ -1,6 +1,7 @@
 package config
 
 import (
+	"content-management/pkg/integration/storage/minio/client"
 	"content-management/pkg/redis"
 	"fmt"
 	"os"
@@ -12,11 +13,12 @@ import (
 
 // Config ...
 type Config struct {
-	Databases DBConfig `yaml:",inline"`
-	Env       string   `yaml:"env"`
-	Port      string   `yaml:"port"`
-	Redis     Redis    `yaml:"redis"`
-	S3        S3       `yaml:"s3"`
+	Databases DBConfig      `yaml:",inline"`
+	Env       string        `yaml:"env"`
+	Port      string        `yaml:"port"`
+	Redis     Redis         `yaml:"redis"`
+	S3        S3            `yaml:"s3"`
+	CMCClound client.Config `yaml:"cmc_cloud"`
 }
 
 type ConfigPostgres struct {

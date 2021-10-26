@@ -4,6 +4,7 @@ Headless cms for mobile and web apps
 
 ## Quick Start
 - Install [docker](https://www.docker.com/)
+- Install [consul](https://www.consul.io/docs/install)
 
 ### Set environment variables
 ```bash

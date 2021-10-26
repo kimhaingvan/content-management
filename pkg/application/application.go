@@ -3,7 +3,8 @@ package application
 import (
 	"net/http"
 
-	"github.com/go-chi/chi"
+	"github.com/gorilla/mux"
+
 	"github.com/jinzhu/gorm"
 	"github.com/qor/admin"
 	"github.com/qor/assetfs"
@@ -23,7 +24,7 @@ type Application struct {
 }
 
 type AppConfig struct {
-	Router   *chi.Mux
+	Router   *mux.Router
 	Handlers []http.Handler
 	AssetFS  assetfs.Interface
 	Admin    *admin.Admin
@@ -37,7 +38,7 @@ func New(config *AppConfig) *Application {
 	}
 
 	if config.Router == nil {
-		config.Router = chi.NewRouter()
+		config.Router = mux.NewRouter()
 	}
 
 	if config.AssetFS == nil {
