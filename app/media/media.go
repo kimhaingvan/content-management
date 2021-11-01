@@ -2,17 +2,16 @@ package media
 
 import (
 	"content-management/app/media/controller"
+	"content-management/app/media/model"
 	"content-management/pkg/application"
+	"content-management/pkg/httpreq"
+	minio2 "content-management/pkg/integration/minio"
 	"content-management/pkg/utils/funcmapmaker"
 	"errors"
 	"fmt"
-	"io"
-	"mime/multipart"
 	"net/http"
-	"strings"
 
-	"github.com/minio/minio-go/v7"
-	"github.com/minio/minio-go/v7/pkg/credentials"
+	"go.elastic.co/apm"
 
 	"github.com/qor/media/media_library"
 
@@ -24,130 +23,85 @@ import (
 	"github.com/qor/roles"
 )
 
-// App order app
-type OrderMicroApp struct {
+// app
+type MediaMicroApp struct {
 	config      *Config
 	controller  *controller.Controller
-	minioClient *minio.Client
+	minioClient *minio2.Client
 }
 
 // Config order config struct
 type Config struct {
-	Prefix          string
-	Endpoint        string
-	SecretAccessKey string
-	AccessKey       string
-	BucketName      string
+	Prefix      string
+	MinioClient *minio2.Client
 }
 
 // New new order app
-func New(config *Config) *OrderMicroApp {
+func New(config *Config) *MediaMicroApp {
 	if config.Prefix == "" {
 		config.Prefix = "/"
 	}
 
-	return &OrderMicroApp{
-		config:     config,
-		controller: &controller.Controller{},
+	return &MediaMicroApp{
+		config:      config,
+		controller:  &controller.Controller{},
+		minioClient: config.MinioClient,
 	}
 }
 
 // ConfigureApplication configure application
-func (app *OrderMicroApp) ConfigureApplication(application *application.Application) {
+func (app *MediaMicroApp) ConfigureApplication(application *application.Application) {
 	// ViewPaths tính từ file main.go
-	app.controller.View = render.New(&render.Config{AssetFileSystem: application.AssetFS.NameSpace("media")}, "app/media/views")
+	app.controller.View = render.New(&render.Config{AssetFileSystem: application.AssetFS.NameSpace("medias")}, "app/media/view")
 	funcmapmaker.AddFuncMapMaker(app.controller.View)
-	admin := application.Admin
-	app.ConfigureAdmin(application.Admin)
 
+	qorAdmin := application.Admin
+	app.ConfigureAdmin(qorAdmin)
+
+	qorAdmin.GetRouter().Post("/GetMedia", app.controller.GetMediaFile)
 	application.Router.PathPrefix(app.config.Prefix).Handler(
 		http.StripPrefix(
-			strings.TrimSuffix(app.config.Prefix, "/"),
-			admin.NewServeMux("/"),
+			"/",
+			application.Handler,
 		),
 	)
+
 }
 
 // ConfigureAdmin configure admin interface
-func (o *OrderMicroApp) ConfigureAdmin(Admin *admin.Admin) {
-	// Add Order
-	Admin.DB.AutoMigrate(&media_library.MediaLibrary{})
+func (o *MediaMicroApp) ConfigureAdmin(Admin *admin.Admin) {
+	Admin.DB.AutoMigrate(&model.CustomMedia{})
 	media := Admin.AddResource(
-		&media_library.MediaLibrary{},
+		&model.CustomMedia{},
 		&admin.Config{
 			Menu: []string{"Media Management"},
 		},
 	)
+
+	for _, meta := range model.MediaMetas {
+		media.Meta(meta)
+	}
+	media.UseTheme("media_library")
+
 	media.SaveHandler = func(result interface{}, cont *qor.Context) error {
+		trx := apm.DefaultTracer.StartTransaction(fmt.Sprintf("%v %v", cont.Request.Method, cont.Request.RequestURI), "request")
+		trxCtx := apm.ContextWithTransaction(cont.Request.Context(), trx)
 		if (cont.GetDB().NewScope(result).PrimaryKeyZero() &&
 			media.HasPermission(roles.Create, cont)) || // has create permission
 			media.HasPermission(roles.Update, cont) { // has update permission
-			var err error
-			var contentType, fileName string
-			var fileSize int64
-			var file multipart.File
-			var mediaFile *media_library.MediaLibrary
 
 			// Save file in CMC Cloud
-			if cont.Request != nil && cont.Request.MultipartForm != nil && cont.Request.MultipartForm.File["QorResource.File"] != nil {
-				fileHeaders := cont.Request.MultipartForm.File["QorResource.File"]
-				if len(fileHeaders) > 0 && fileHeaders[0] != nil {
-					fileHeader := fileHeaders[0]
-					fileName = fileHeader.Filename
-					fileSize = fileHeader.Size
-					contentTypes := fileHeader.Header["Content-Type"]
-					if len(contentTypes) > 0 && contentTypes[0] != "" {
-						contentType = contentTypes[0]
-					}
-				}
-
-				var ok bool
-				mediaFile, ok = result.(*media_library.MediaLibrary)
-				if !ok {
-					return errors.New("Can not convert file")
-				}
-
-				mediaFile.File.SelectedType = contentType
-				mediaFile.SelectedType = contentType
-
-				// Public url of file
-				userMetaData := map[string]string{
-					"x-amz-acl": "public-read",
-				}
-
-				fileURL := fmt.Sprintf("https://%v/%v/%v", o.config.Endpoint, o.config.BucketName, fileName)
-				mediaFile.File.Url = fileURL
-				mediaFile.File.Description = fileURL
-
-				file, err = mediaFile.File.FileHeader.Open()
+			mediaFile, _ := result.(*model.CustomMedia)
+			if httpreq.HasMediaFile(cont.Request) {
+				res, err := o.minioClient.UploadFileToMinioFromRequest(trxCtx, cont.Request, mediaFile.File)
 				if err != nil {
 					return err
 				}
-				defer file.Close()
-				// Initialize minio client object.
-				minioClient, err := minio.New(o.config.Endpoint, &minio.Options{
-					Creds:  credentials.NewStaticV4(o.config.AccessKey, o.config.SecretAccessKey, ""),
-					Secure: true,
-				})
-				if err != nil {
-					return err
-				}
-
-				var f io.Reader
-				f = file
-
-				// Upload file to CMC Cloud (Minio)
-				_, err = minioClient.PutObject(cont.Request.Context(), o.config.BucketName, fileName, f, fileSize, minio.PutObjectOptions{
-					ContentType:  contentType,
-					UserMetadata: userMetaData,
-				})
-				if err != nil {
-					return err
-				}
+				mediaFile.File.Url = res.URL
+				mediaFile.URL = res.URL
 			}
-
 			// Save file infomations in local database
-			if err = cont.GetDB().Save(mediaFile).Error; err != nil {
+			if err := cont.GetDB().Save(mediaFile).Error; err != nil {
 				return err
 			}
 			return nil
@@ -156,6 +110,8 @@ func (o *OrderMicroApp) ConfigureAdmin(Admin *admin.Admin) {
 	}
 
 	media.DeleteHandler = func(result interface{}, context *qor.Context) error {
+		trx := apm.DefaultTracer.StartTransaction(fmt.Sprintf("%v %v", context.Request.Method, context.Request.RequestURI), "request")
+		trxCtx := apm.ContextWithTransaction(context.Request.Context(), trx)
 		if media.HasPermission(roles.Delete, context) {
 			if primaryQuerySQL, primaryParams := media.ToPrimaryQueryParams(context.ResourceID, context); primaryQuerySQL != "" {
 				if !context.GetDB().First(result, append([]interface{}{primaryQuerySQL}, primaryParams...)...).RecordNotFound() {
@@ -166,17 +122,10 @@ func (o *OrderMicroApp) ConfigureAdmin(Admin *admin.Admin) {
 					}
 
 					// Initialize minio client object and delete file.
-					minioClient, err := minio.New(o.config.Endpoint, &minio.Options{
-						Creds:  credentials.NewStaticV4(o.config.AccessKey, o.config.SecretAccessKey, ""),
-						Secure: true,
-					})
-					if err != nil {
-						return err
-					}
 					db := context.GetDB().First(result).Value
 					mediaFile := db.(*media_library.MediaLibrary)
 					fileName := mediaFile.File.FileName
-					err = minioClient.RemoveObject(context.Request.Context(), o.config.BucketName, fileName, minio.RemoveObjectOptions{})
+					err = o.minioClient.RemoveObject(trxCtx, fileName)
 					return err
 				}
 			}

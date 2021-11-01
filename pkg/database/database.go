@@ -1,25 +1,32 @@
 package database
 
 import (
-	"content-management/cmd/content-server/config"
+	"content-management/core/config"
+	"content-management/pkg/log"
 	"fmt"
+	"time"
 
-	//"github.com/kiem-toan/cmd/audit-server/config"
-	//"github.com/kiem-toan/infrastructure/logger"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
+	"go.elastic.co/apm/module/apmgorm"
 )
 
 type Database struct {
-	DB *gorm.DB
+	GormDB *gorm.DB
 }
 
-func New(d config.Config) *Database {
-	c := d.Databases.Postgres
+func New(c config.PostgresConfig) *Database {
 	connString := fmt.Sprintf("dbname=%v user=%v password=%v host=%v port=%v sslmode=%v", c.Database, c.Username, c.Password, c.Host, c.Port, c.SSLMode)
-	db, err := gorm.Open("postgres", connString)
+	db, err := apmgorm.Open("postgres", connString)
 	if err != nil {
-		panic(err)
+		log.Fatal(err, nil, nil)
 	}
-	return &Database{DB: db}
+	db.DB().SetMaxOpenConns(c.MaxOpenConns)
+	db.DB().SetMaxIdleConns(c.MaxIdleConns)
+	db.DB().SetConnMaxLifetime(time.Minute * 5)
+
+	if err = db.DB().Ping(); err != nil {
+		log.Fatal(err, nil, nil)
+	}
+	return &Database{GormDB: db}
 }

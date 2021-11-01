@@ -1,11 +1,11 @@
 package zipkin
 
 import (
+	"content-management/core/config"
 	"context"
 	"errors"
 	"fmt"
 	"net/http"
-	"os"
 
 	"github.com/gorilla/mux"
 
@@ -24,7 +24,7 @@ func NewReporter(zipkinURL string) reporter.Reporter {
 
 func NewTracer(reporter reporter.Reporter) (*zipkin.Tracer, error) {
 	// create our local service endpoint
-	endpoint, err := zipkin.NewEndpoint(os.Getenv("APPLICATION_NAME"), "localhost:"+"8080")
+	endpoint, err := zipkin.NewEndpoint(config.GetAppConfig().ApplicationName, "localhost:"+"8080")
 	if err != nil {
 		return nil, errors.New("Can not register zipkin tracer")
 	}
