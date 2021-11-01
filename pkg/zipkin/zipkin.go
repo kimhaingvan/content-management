@@ -1,66 +1,32 @@
 package zipkin
 
 import (
-	"context"
-	"errors"
+	"content-management/core/config"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 
-	"github.com/gorilla/mux"
+	zipkinhttp "github.com/openzipkin/zipkin-go/middleware/http"
+
 	"github.com/opentracing/opentracing-go"
-	zkOt "github.com/openzipkin-contrib/zipkin-go-opentracing"
-
-	"github.com/openzipkin/zipkin-go/reporter"
-
 	"github.com/openzipkin/zipkin-go"
 	reporterhttp "github.com/openzipkin/zipkin-go/reporter/http"
 )
 
 var (
+	host   = "localhost"
 	Tracer opentracing.Tracer
 )
 
-func InitTracer(reporter reporter.Reporter) error {
-	// create our local service endpoint
-	endpoint, err := zipkin.NewEndpoint(os.Getenv("APPLICATION_NAME"), "localhost:"+"8080")
-	if err != nil {
-		return errors.New("Can not register zipkin tracer")
-	}
-
-	// Sampler tells you which traces are going to be sampled or not. In this case we will record 100% (1.00) of traces.
-	sampler, err := zipkin.NewCountingSampler(1)
-	if err != nil {
-		return err
-	}
-
-	// initialize our tracer
-	tracer, err := zipkin.NewTracer(
-		reporter,
-		zipkin.WithTraceID128Bit(true),
-		zipkin.WithLocalEndpoint(endpoint),
-		zipkin.WithSampler(sampler),
-	)
-	if err != nil {
-		return err
-	}
-	Tracer = zkOt.Wrap(tracer)
-	opentracing.SetGlobalTracer(Tracer)
-	return nil
-}
-
-func NewReporter(zipkinURL string) reporter.Reporter {
-	// Create reporter to send data to zipkin
-	endpointURL := fmt.Sprintf("%v/api/v2/spans", zipkinURL)
+func NewTracer() (*zipkin.Tracer, error) {
+	var endpointURL = config.GetAppConfig().Zipkin.URL + "/api/v2/spans"
+	// The reporter sends traces to zipkin server
 	reporter := reporterhttp.NewReporter(endpointURL)
-	return reporter
-}
-
-func NewTracer(reporter reporter.Reporter) (opentracing.Tracer, error) {
-	// create our local service endpoint
-	endpoint, err := zipkin.NewEndpoint(os.Getenv("APPLICATION_NAME"), "localhost:"+"8080")
+	hostPort := fmt.Sprintf("%v:%v", host, config.GetAppConfig().ServerPort)
+	localEndpoint, err := zipkin.NewEndpoint(os.Getenv("APPLICATION_NAME"), hostPort)
 	if err != nil {
-		return nil, errors.New("Can not register zipkin tracer")
+		return nil, err
 	}
 
 	// Sampler tells you which traces are going to be sampled or not. In this case we will record 100% (1.00) of traces.
@@ -68,30 +34,22 @@ func NewTracer(reporter reporter.Reporter) (opentracing.Tracer, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	// initialize our tracer
-	tracer, err := zipkin.NewTracer(
+	t, err := zipkin.NewTracer(
 		reporter,
-		zipkin.WithTraceID128Bit(true),
-		zipkin.WithLocalEndpoint(endpoint),
 		zipkin.WithSampler(sampler),
+		zipkin.WithLocalEndpoint(localEndpoint),
 	)
 	if err != nil {
 		return nil, err
 	}
-	Tracer = zkOt.Wrap(tracer)
-	opentracing.SetGlobalTracer(Tracer)
-	return Tracer, nil
-}
-
-func SetSpanNameByRoute(ctx context.Context, r *http.Request) context.Context {
-	if span := zipkin.SpanFromContext(ctx); span != nil {
-		if route := mux.CurrentRoute(r); route != nil {
-			if routePath, err := route.GetPathTemplate(); err == nil {
-				zipkin.TagHTTPRoute.Set(span, routePath)
-				span.SetName(r.Method + " " + routePath)
-			}
-		}
+	// We add the instrumented transport to the defaultClient
+	// that comes with the zipkin-go library
+	http.DefaultClient.Transport, err = zipkinhttp.NewTransport(
+		t,
+		zipkinhttp.TransportTrace(true),
+	)
+	if err != nil {
+		log.Fatal(err, nil, nil)
 	}
-	return ctx
+	return t, err
 }

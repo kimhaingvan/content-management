@@ -3,7 +3,7 @@
 # Start from the latest golang base image
 FROM golang:latest
 
-# Set the Current Working Directory inside the container
+## Set the Current Working Directory inside the container
 WORKDIR /app
 
 # Copy go mod and sum files
@@ -17,6 +17,8 @@ COPY . .
 
 # Build the Go app
 RUN go build -o main ./
+
+RUN rm -rf /tmp/*
 
 # Expose port 8080 to the outside world
 EXPOSE 8080

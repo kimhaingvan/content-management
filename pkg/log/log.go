@@ -1,120 +1,127 @@
 package log
 
 import (
+	"fmt"
 	"net"
 	"os"
+	"runtime"
 
 	logrustash "github.com/bshuster-repo/logrus-logstash-hook"
 	"github.com/openzipkin/zipkin-go"
 	log "github.com/sirupsen/logrus"
 )
 
+const (
+	appNameFieldKey = "applicationName"
+)
+
 func SetLoglevel(level string) {
 	switch level {
+	case "trace":
+		log.SetLevel(log.TraceLevel)
+	case "debug":
+		log.SetLevel(log.DebugLevel)
 	case "info":
 		log.SetLevel(log.InfoLevel)
+	case "warn":
+		log.SetLevel(log.WarnLevel)
+	case "error":
+		log.SetLevel(log.ErrorLevel)
 	case "fatal":
 		log.SetLevel(log.FatalLevel)
 	case "panic":
 		log.SetLevel(log.PanicLevel)
-	case "warn":
-		log.SetLevel(log.WarnLevel)
-	case "debug":
-		log.SetLevel(log.DebugLevel)
 	default:
 		log.SetLevel(log.ErrorLevel)
 	}
 }
-func LogStashRegister() {
-	log.SetFormatter(&log.JSONFormatter{})
-	log.SetLevel(log.ErrorLevel)
-	connLogstash, err := net.Dial("tcp", os.Getenv("LOGSTASH_IP")+`:`+os.Getenv("LOGSTASH_PORT"))
-	Fatal(err)
-	hook, err := logrustash.NewHookWithConn(connLogstash, os.Getenv("APPLICATION_NAME"))
-	Fatal(err)
-	log.AddHook(hook)
-}
-func Fatal(err error) {
+
+func RegisterLogStash(logstashIP, logstashPort, applicationName string) {
+	log.SetFormatter(&log.TextFormatter{
+		TimestampFormat: "02-01-2006 15:04:05",
+		FullTimestamp:   true,
+	})
+	connLogstash, err := net.Dial("tcp", logstashIP+`:`+logstashPort)
 	if err != nil {
-		log.WithFields(log.Fields{
-			"Application name": os.Getenv("APPLICATION_NAME"),
-		}).Fatal(err)
-	}
-}
-func Info(message string) {
-	log.WithFields(log.Fields{
-		"Application name": os.Getenv("APPLICATION_NAME"),
-	}).Info(message)
-}
-func Warn(message string) {
-	log.WithFields(log.Fields{
-		"Application name": os.Getenv("APPLICATION_NAME"),
-	}).Warn(message)
-}
-func Error(err error) {
-	if err != nil {
-		log.WithFields(log.Fields{
-			"Application name": os.Getenv("APPLICATION_NAME"),
-		}).Error(err)
-	}
-}
-func InfoWithTraceID(message string, Span zipkin.Span) {
-	var logFeilds = log.Fields{
-		"application name": os.Getenv("APPLICATION_NAME"),
-	}
-	if Span.Context().ParentID == nil {
-		logFeilds["TraceID"] = Span.Context().TraceID.String()
-	} else {
-		logFeilds["TraceID"] = Span.Context().ParentID.String()
+		Fatal(err, nil, nil)
 	}
 
-	log.WithFields(logFeilds).Info(message)
+	hook, err := logrustash.NewHookWithConn(connLogstash, applicationName)
+	if err != nil {
+		Fatal(err, nil, nil)
+	}
+	log.AddHook(hook)
 }
-func WarnWithTraceID(message string, Span zipkin.Span) {
-	var logFeilds = log.Fields{
-		"application name": os.Getenv("APPLICATION_NAME"),
-	}
-	if Span.Context().ParentID == nil {
-		logFeilds["TraceID"] = Span.Context().TraceID.String()
-	} else {
-		logFeilds["TraceID"] = Span.Context().ParentID.String()
-	}
-	log.WithFields(logFeilds).Warn(message)
-}
-func FatalWithTraceID(Error string, Span zipkin.Span) {
-	var logFeilds = log.Fields{
-		"application name": os.Getenv("APPLICATION_NAME"),
-	}
-	if Span.Context().ParentID == nil {
-		logFeilds["TraceID"] = Span.Context().TraceID.String()
-	} else {
-		logFeilds["TraceID"] = Span.Context().ParentID.String()
-	}
-	if Error != "" {
-		log.WithFields(logFeilds).Fatal(Error)
+
+func Trace(err error, span zipkin.Span, fields map[string]interface{}) {
+	if err != nil {
+		logFields := getLogFields(span, fields)
+		log.WithFields(logFields).Trace(err)
 	}
 }
-func ErrorWithTraceID(error error, span zipkin.Span) {
-	var logFeilds = log.Fields{
-		"application name": os.Getenv("APPLICATION_NAME"),
+
+func Debug(err error, span zipkin.Span, fields map[string]interface{}) {
+	if err != nil {
+		logFields := getLogFields(span, fields)
+		log.WithFields(logFields).Debug(err)
 	}
+}
+
+func Info(message string, span zipkin.Span, fields map[string]interface{}) {
+	logFields := getLogFields(span, fields)
+	log.WithFields(logFields).Info(message)
+}
+
+func Warn(message string, span zipkin.Span, fields map[string]interface{}) {
+	logFields := getLogFields(span, fields)
+	log.WithFields(logFields).Warn(message)
+}
+
+func Error(err error, span zipkin.Span, fields map[string]interface{}) {
+	if err != nil {
+		logFields := getLogFields(span, fields)
+		log.WithFields(logFields).Error(err)
+	}
+}
+
+func Fatal(err error, span zipkin.Span, fields map[string]interface{}) {
+	if err != nil {
+		logFields := getLogFields(span, fields)
+		log.WithFields(logFields).Fatal(err)
+	}
+}
+
+func Panic(err error, span zipkin.Span, fields map[string]interface{}) {
+	if err != nil {
+		logFields := getLogFields(span, fields)
+		log.WithFields(logFields).Panic(err)
+	}
+}
+
+func getLogFields(span zipkin.Span, fields map[string]interface{}) log.Fields {
+	// Init log fields
+	f := log.Fields{
+		appNameFieldKey: os.Getenv("APPLICATION_NAME"),
+	}
+
+	// Always include the original location
+	_, file, line, _ := runtime.Caller(2)
+	f["location_file"] = fmt.Sprintf("%v:%v", file, line)
+
+	// Assign log fields
+	for k, v := range fields {
+		f[k] = v
+	}
+
+	// Assign trace_id field
 	if span != nil {
 		if span.Context().ParentID == nil {
-			logFeilds["TraceID"] = span.Context().TraceID.String()
+			f["trace_id"] = span.Context().TraceID.String()
 		} else {
-			logFeilds["TraceID"] = span.Context().ParentID.String()
+			f["trace_id"] = span.Context().ParentID.String()
 		}
+		f["span_id"] = span.Context().ID
 	}
-	log.WithFields(logFeilds).Error(error)
-}
-func PanicWithTraceID(message string, Span zipkin.Span) {
-	var logFeilds = log.Fields{
-		"application name": os.Getenv("APPLICATION_NAME"),
-	}
-	if Span.Context().ParentID == nil {
-		logFeilds["TraceID"] = Span.Context().TraceID.String()
-	} else {
-		logFeilds["TraceID"] = Span.Context().ParentID.String()
-	}
-	log.WithFields(logFeilds).Panic(message)
+
+	return f
 }

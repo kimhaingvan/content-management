@@ -1,81 +1,68 @@
 package application
 
 import (
+	"content-management/registry"
 	"net/http"
 
-	"github.com/gorilla/mux"
+	"github.com/qor/middlewares"
+	"github.com/qor/wildcard_router"
 
-	"github.com/jinzhu/gorm"
+	"github.com/go-chi/chi"
+
 	"github.com/qor/admin"
 	"github.com/qor/assetfs"
-	"github.com/qor/middlewares"
-	"github.com/qor/publish2"
-	"github.com/qor/wildcard_router"
 )
 
 // MicroAppInterface micro app interface
 type MicroAppInterface interface {
-	ConfigureApplication(*Application)
+	Configure()
+}
+
+type Config struct {
+	Registry *registry.Registry
+	Router   *chi.Mux
+	Handlers []http.Handler
+	AssetFS  assetfs.Interface
+	Admin    *admin.Admin
 }
 
 // Application main application
 type Application struct {
-	*AppConfig
+	*Config
 }
 
-type AppConfig struct {
-	Router   *mux.Router
-	Handlers []http.Handler
-	AssetFS  assetfs.Interface
-	Admin    *admin.Admin
-	DB       *gorm.DB
-}
-
-// New new application
-func New(config *AppConfig) *Application {
-	if config == nil {
-		config = &AppConfig{}
-	}
-
+// NewApplication new application
+func NewApplication(config *Config) *Application {
 	if config.Router == nil {
-		config.Router = mux.NewRouter()
-	}
-
-	if config.AssetFS == nil {
-		config.AssetFS = assetfs.AssetFS()
-	}
-
-	if config.Admin == nil {
-		admin := admin.New(&admin.AdminConfig{
-			SiteName: "MAFC CMS",
-			//Auth:     auth.AdminAuth{},
-			DB: config.DB.Set(publish2.VisibleMode, publish2.ModeOff).Set(publish2.ScheduleMode, publish2.ModeOff),
-		})
-		config.Admin = admin
+		config.Router = chi.NewRouter()
 	}
 	return &Application{
-		AppConfig: config,
+		Config: config,
 	}
 }
 
-// Use mount router into micro app
-func (application *Application) Use(apps ...MicroAppInterface) {
-	for _, app := range apps {
-		app.ConfigureApplication(application)
-	}
+func (a *Application) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	a.NewServeMux().ServeHTTP(w, r)
 }
 
 // NewServeMux allocates and returns a new ServeMux.
-func (application *Application) NewServeMux() http.Handler {
-	if len(application.Handlers) == 0 {
-		return middlewares.Apply(application.Router)
+func (a *Application) NewServeMux() http.Handler {
+	if len(a.Handlers) == 0 {
+		return middlewares.Apply(a.Router)
 	}
 
 	wildcardRouter := wildcard_router.New()
-	for _, handler := range application.Handlers {
+	for _, handler := range a.Handlers {
 		wildcardRouter.AddHandler(handler)
 	}
-	wildcardRouter.AddHandler(application.Router)
+	wildcardRouter.AddHandler(a.Router)
 
 	return middlewares.Apply(wildcardRouter)
+}
+
+// Use mount router into micro app
+func Use(apps ...MicroAppInterface) {
+	for _, app := range apps {
+		app.Configure()
+	}
 }
