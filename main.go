@@ -1,11 +1,16 @@
 package main
 
 import (
+	"content-management/app/media"
 	"content-management/app/order"
 	"content-management/cmd/content-server/build"
-	"content-management/cmd/content-server/config"
+	"content-management/core/config"
 	"content-management/pkg/application"
-	"content-management/pkg/cmenv"
+	"content-management/pkg/integration/consul"
+	minio2 "content-management/pkg/integration/minio"
+	intLog "content-management/pkg/log"
+	"content-management/pkg/middleware"
+	intzipkin "content-management/pkg/zipkin"
 	"context"
 	"fmt"
 	"log"
@@ -14,55 +19,81 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+
+	zipkinhttp "github.com/openzipkin/zipkin-go/middleware/http"
+
+	"github.com/subosito/gotenv"
 )
 
-func main() {
-	cfg, err := loadConfig()
-	if err != nil {
-		log.Fatal("Error in loading config: ", err)
-	}
-	app, err := build.InitApp(*cfg)
-	if err != nil {
-		panic(err)
-	}
-	registerApp(cfg, app.App)
-	s := &http.Server{
-		Addr:    fmt.Sprintf(":%v", cfg.Port),
-		Handler: app.App.NewServeMux(),
-	}
-	go func() {
-		fmt.Println("HTTP server content management listening on %v", s.Addr)
-		err = s.ListenAndServe()
-		switch err {
-		case nil, http.ErrServerClosed:
-			err = nil
-		default:
-			fmt.Errorf("HTTP server content management error: %v", err)
-		}
-	}()
-
-	// Gracefully shutdown
-	shutdownGracefully(s)
+func init() {
+	gotenv.Load()
+	go intLog.RegisterLogStash(os.Getenv("LOGSTASH_IP"), os.Getenv("LOGSTASH_PORT"), os.Getenv("APPLICATION_NAME"))
 }
 
-func registerApp(cfg *config.Config, app *application.Application) {
-	app.Use(order.New(&order.Config{
-		Prefix:             "",
-		AwsS3Region:        cfg.S3.AwsS3Region,
-		AwsS3Bucket:        cfg.S3.AwsS3Bucket,
-		AwsAccessKey:       cfg.S3.AwsAccessKey,
-		AwsSecretAccessKey: cfg.S3.AwsSecretAccessKey,
-	}))
+func main() {
+	var cfgCh = make(chan config.Config, 1)
+	watcher := consul.RegisterConsulWatcher(cfgCh, &consul.Config{
+		ApplicationName: os.Getenv("APPLICATION_NAME"),
+		ConsulAclToken:  os.Getenv("CONSUL_ACL_TOKEN"),
+		ConsulIP:        os.Getenv("CONSUL_IP"),
+		ConsulPort:      os.Getenv("CONSUL_PORT"),
+	})
+	defer watcher.Stop()
+
+	var s *http.Server
+	for {
+		appCfg := <-cfgCh
+		config.SetAppConfig(appCfg)
+		if s != nil {
+			err := s.Shutdown(context.Background())
+			if err != nil {
+				panic(err)
+			}
+		}
+		app := build.BuildApplication(config.GetAppConfig())
+		defer app.DB.Close()
+
+		tracer, err := intzipkin.NewTracer()
+		if err != nil {
+			intLog.Fatal(err, nil, nil)
+		}
+
+		// Middlewares
+		app.Router.Use(zipkinhttp.NewServerMiddleware(
+			tracer,
+			zipkinhttp.SpanName("Request")),
+		)
+		app.Router.Use(middleware.ZipkinMiddleware)
+		app.Router.Use(middleware.APILoggingMiddleware)
+
+		configureApp(config.GetAppConfig(), app)
+		go func() {
+			s = &http.Server{
+				Addr:    fmt.Sprintf(":%v", config.GetAppConfig().ServerPort),
+				Handler: app.NewServeMux(),
+			}
+
+			fmt.Println("HTTP server content management listening on", config.GetAppConfig().ServerPort)
+			err = s.ListenAndServe()
+			switch err {
+			case nil, http.ErrServerClosed:
+				err = nil
+			default:
+				fmt.Errorf("HTTP server content management error: %v", err)
+			}
+		}()
+	}
 }
 
 func shutdownGracefully(s *http.Server) {
 	signChan := make(chan os.Signal, 1)
 	// Thiết lập một channel để lắng nghe tín hiệu dừng từ hệ điều hành,
 	// ở đây chúng ta lưu ý 2 tín hiệu (signal) là SIGINT và SIGTERM
-	signal.Notify(signChan, os.Interrupt, syscall.SIGTERM)
+	signal.Notify(signChan, os.Interrupt, syscall.SIGINT, syscall.SIGTERM, syscall.SIGUSR1)
 	<-signChan
+
 	// Thiết lập một khoản thời gian (Timeout) để dừng hoàn toàn ứng dụng và đóng tất cả kết nối.
-	timeWait := 30 * time.Second
+	timeWait := 3 * time.Second
 	ctx, cancel := context.WithTimeout(context.Background(), timeWait)
 	defer func() {
 		log.Println("Close another connection")
@@ -75,13 +106,24 @@ func shutdownGracefully(s *http.Server) {
 	close(signChan)
 }
 
-func loadConfig() (*config.Config, error) {
-	config.InitFlags()
-	config.ParseFlags()
-	cfg, err := config.Load()
-	if err != nil {
-		return nil, err
-	}
-	cmenv.SetEnvironment("backend-server", cfg.Env)
-	return &cfg, nil
+func configureApp(cfg config.Config, app *application.Application) {
+	minioClient := minio2.New(&minio2.Config{
+		Endpoint:        cfg.Minio.Endpoint,
+		SecretAccessKey: cfg.Minio.SecretAccessKey,
+		AccessKey:       cfg.Minio.AccessKey,
+		BucketName:      cfg.Minio.BucketName,
+	})
+	app.Use(
+		media.New(&media.Config{
+			Prefix:      "",
+			MinioClient: minioClient,
+		}),
+	)
+	app.Use(
+		order.New(&order.Config{
+			Prefix:      "",
+			MinioClient: minioClient,
+		}),
+	)
+
 }

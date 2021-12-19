@@ -1,37 +1,32 @@
 package controller
 
 import (
-	"content-management/pkg/integration/storage/s3/driver"
-	"context"
-	"net/http"
+	"time"
+
+	"github.com/qor/admin"
+
+	"github.com/go-resty/resty/v2"
 
 	"github.com/qor/render"
 )
 
 type Controller struct {
-	View     *render.Render
-	S3Driver *driver.S3Driver
+	View *render.Render
 }
 
-// Cart shopping cart
-func (c *Controller) ExtraFunc(w http.ResponseWriter, req *http.Request) {
-	req.ParseMultipartForm(10 << 20)
-
-	// Get a file from the form input name "file"
-	file, header, err := req.FormFile("file")
+func (c *Controller) TestFunc(ctx *admin.Context) {
+	ctx.Writer.WriteHeader(200)
+	time.Sleep(1 * time.Second)
+	//span := opentracing.SpanFromContext(req.Context())
+	//childSpan := zipkin.Tracer.StartSpan(
+	//	"child",
+	//	opentracing.ChildOf(span.Context()),
+	//)
+	//defer childSpan.Finish()
+	client := resty.New()
+	req1 := client.R()
+	_, err := req1.Get("https://www.google.com/")
 	if err != nil {
-		http.Error(w, "Something went wrong retrieving the file from the form", http.StatusInternalServerError)
-		return
 	}
-	defer file.Close()
-	uploadFileArgs := &driver.UploadFileArgs{
-		File:     file,
-		FileName: header.Filename,
-	}
-
-	_, err = c.S3Driver.UploadFile(context.Background(), uploadFileArgs)
-	if err != nil {
-		panic(err)
-	}
-	c.View.Execute("success", map[string]interface{}{"Order": "dqwdas"}, req, w)
+	c.View.Execute("success", map[string]interface{}{"Order": "dqwdas"}, ctx.Request, ctx.Writer)
 }

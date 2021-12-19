@@ -1,0 +1,14 @@
+*.cover
+*.out
+*.test
+.DS_Store
+.idea
+.vscode
+__*
+_out
+bin
+debug*
+vendor
+zz_release.*.go
+~*
+.mod
