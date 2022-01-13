@@ -1,12 +1,10 @@
 package minio
 
 import (
-	"content-management/pkg/errorx"
 	"content-management/pkg/log"
 	"context"
 	"fmt"
 	"io"
-	"net/http"
 
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
@@ -71,7 +69,7 @@ func (c *Client) UploadFile(ctx context.Context, args *UploadObjectArgs) (*Uploa
 	mediaObj.Url = fileURL
 	file, err := mediaObj.FileHeader.Open()
 	if err != nil {
-		return nil, errorx.Errorf(http.StatusInternalServerError, err, "Can not open file")
+		return nil, nil
 	}
 	defer file.Close()
 
@@ -81,7 +79,7 @@ func (c *Client) UploadFile(ctx context.Context, args *UploadObjectArgs) (*Uploa
 		UserMetadata: args.UserMetaData,
 	})
 	if err != nil {
-		return nil, errorx.Errorf(http.StatusInternalServerError, err, "Can not upload file to minio server")
+		return nil, nil
 	}
 	return &UploadObjectResponse{
 		URL: fileURL,
@@ -93,7 +91,7 @@ func (c *Client) RemoveObject(ctx context.Context, fileName string) error {
 	minioServiceSpan := trx.StartSpan(fmt.Sprintf("Remove file in Minio server"), "External service.Minio", nil)
 	defer minioServiceSpan.End()
 	if err := c.minioClient.RemoveObject(ctx, c.config.BucketName, fileName, minio.RemoveObjectOptions{}); err != nil {
-		return errorx.Errorf(http.StatusInternalServerError, err, "Can not remove object in minio server")
+		return nil
 	}
 	return nil
 }

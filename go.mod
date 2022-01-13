@@ -34,6 +34,7 @@ require (
 	github.com/qor/validations v0.0.0-20171228122639-f364bca61b46
 	github.com/qor/wildcard_router v0.0.0-20171031035524-56710e5bb5a4
 	github.com/sirupsen/logrus v1.8.1
+	github.com/spf13/cobra v1.0.0
 	github.com/subosito/gotenv v1.2.0
 	go.elastic.co/apm v1.15.0
 	go.elastic.co/apm/module/apmgorm v1.14.0

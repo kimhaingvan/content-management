@@ -3,7 +3,6 @@ package order
 import (
 	"content-management/app/order/handler"
 	"content-management/app/order/model"
-	"content-management/app/order/service"
 	"content-management/pkg/application"
 	"content-management/pkg/utils/funcmapmaker"
 	"fmt"
@@ -22,7 +21,6 @@ type Config struct {
 type OrderServer struct {
 	*Config
 	orderHandler *handler.OrderHandler
-	orderService service.OrderService
 }
 
 // NewOrderServer new order app
@@ -31,7 +29,6 @@ func NewOrderServer(config *Config) *OrderServer {
 	return &OrderServer{
 		Config:       config,
 		orderHandler: handler.NewOrderHandler(orderService),
-		orderService: orderService,
 	}
 }
 
@@ -48,6 +45,7 @@ func (o *OrderServer) Configure() {
 
 func (o *OrderServer) router(router *admin.Router) {
 	router.Post(fmt.Sprintf("%v/TestFunc", o.Prefix), o.orderHandler.TestSample)
+	router.Post(fmt.Sprintf("%v/TestError", o.Prefix), o.orderHandler.TestError)
 }
 
 // configure configure order admin interface

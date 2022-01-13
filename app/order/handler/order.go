@@ -4,6 +4,7 @@ import (
 	"content-management/app/order/model"
 	"content-management/app/order/service"
 	"content-management/pkg/httpreq"
+	"content-management/pkg/httpx"
 	"errors"
 	"fmt"
 
@@ -40,6 +41,14 @@ func (h *OrderHandler) TestSample(ctx *admin.Context) {
 	req1 := client.R()
 	req1.Get("https://www.google.com/")
 	h.View.Execute("success", map[string]interface{}{"Order": "dqwdas"}, ctx.Request, ctx.Writer)
+}
+
+func (h *OrderHandler) TestError(ctx *admin.Context) {
+	test := "data test"
+	err := ctx.GetDB().Save(&test).Error
+	if err != nil {
+		httpx.WriteError(ctx.Request.Context(), ctx.Writer, errors.New("tesst chơi"))
+	}
 }
 
 func (h *OrderHandler) SaveOrderHandler(order *admin.Resource) func(interface{}, *qor.Context) error {

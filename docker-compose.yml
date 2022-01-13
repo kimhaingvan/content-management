@@ -1,18 +1,6 @@
 version: "3.9"
 
 services:
-  mafc_server:
-    container_name: mafc_server
-    build:
-      context: .
-      dockerfile: Dockerfile
-    ports:
-      - 8080:8080
-    depends_on:
-      - mafc_postgres
-    env_file: .env
-    networks:
-      - go_develop
   mafc_postgres:
     container_name: mafc_postgres
     image: postgres:12

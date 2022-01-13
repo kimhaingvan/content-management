@@ -16,12 +16,12 @@ RUN go mod download
 COPY . .
 
 # Build the Go app
-RUN go build -o main ./
+RUN go build -o main ./cmd/content-server/main.go
 
 RUN rm -rf /tmp/*
 
-# Expose port 8080 to the outside world
-EXPOSE 8080
+# Expose port 8011 to the outside world
+EXPOSE 8011
 
 # Command to run the executable
 CMD ["./main"]

@@ -2,7 +2,12 @@ package errorx
 
 type ErrorInterface interface {
 	// GetCode is of the valid err codes.
-	GetCode() int
+	GetCode() string
+
+	// 	GetStatusCode int is of the status code.
+	GetStatusCode() int
+
+	GetTitle() string
 
 	// Msg returns a human-readable, unstructured messages describing the err.
 	Msg() string

@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	ServerPort = "8080"
+	ServerPort = "8011"
 )
 
 var (
@@ -22,7 +22,7 @@ func GetAppConfig() Config {
 func SetAppConfig(cfg Config) {
 	appConfig = cfg
 	appConfig.assignEnv()
-	appConfig.info()
+	appConfig.printlnConfig()
 }
 
 // Config ...
@@ -46,7 +46,6 @@ type OracleConfig struct {
 }
 
 type PostgresConfig struct {
-	Protocol string `json:"protocol"`
 	Host     string `json:"host"`
 	Port     int    `json:"port"`
 	Username string `json:"username"`
@@ -70,7 +69,6 @@ type DBConfig struct {
 // DefaultPostgres ...
 func DefaultPostgres() PostgresConfig {
 	return PostgresConfig{
-		Protocol:       "localhost",
 		Host:           "localhost",
 		Port:           5432,
 		Username:       "postgres",
@@ -87,7 +85,6 @@ func DefaultConfig() *Config {
 		ApplicationName: "",
 		Databases: DBConfig{
 			PostgresConfig: PostgresConfig{
-				Protocol:        "",
 				Host:            "",
 				Port:            0,
 				Username:        "",
@@ -177,7 +174,7 @@ func (c *Config) assignEnv() {
 	c.ServerPort = ServerPort
 }
 
-func (c *Config) info() {
+func (c *Config) printlnConfig() {
 	fmt.Println("Thông số biến môi trường:")
 	pp.Println(c)
 }

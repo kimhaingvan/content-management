@@ -21,7 +21,6 @@ func ParseRequest(r *http.Request, p interface{}) error {
 
 func WriteError(ctx context.Context, w http.ResponseWriter, err error) {
 	errIn := errorx.ToErrorInterface(err)
-	statusCode := errIn.GetCode()
 	jsonErr := errorx.ToErrorJSON(errIn)
 	errBody, err := json.Marshal(&jsonErr)
 	if err != nil {
@@ -29,12 +28,9 @@ func WriteError(ctx context.Context, w http.ResponseWriter, err error) {
 	}
 	w.Header().Set("Content-Type", "application/json") // Error responses are always JSON
 	w.Header().Set("Content-Length", strconv.Itoa(len(errBody)))
-	w.WriteHeader(statusCode) // set HTTP status code and send response
+	w.WriteHeader(errIn.GetStatusCode()) // set HTTP status code and send response
 
-	_, writeErr := w.Write(errBody)
-	if writeErr != nil {
-		_ = writeErr
-	}
+	w.Write(errBody)
 }
 
 func WriteReponse(ctx context.Context, w http.ResponseWriter, status int, payload interface{}) {
