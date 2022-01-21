@@ -18,6 +18,13 @@ type orderService struct {
 	orderRepo repository.OrderRepository
 }
 
+func NewOrderService(d *Dependency) OrderService {
+	return &orderService{
+		Dependency: d,
+		orderRepo:  repository.NewOrderRepository(d.DB),
+	}
+}
+
 func (o *orderService) UploadFile(ctx context.Context, args *UploadObjectArgs) (string, error) {
 	// Public url of file
 	userMetaData := map[string]string{
@@ -39,13 +46,6 @@ func (o *orderService) UploadFile(ctx context.Context, args *UploadObjectArgs) (
 type Dependency struct {
 	DB          *gorm.DB
 	MinioClient *minio.Client
-}
-
-func NewOrderService(d *Dependency) OrderService {
-	return &orderService{
-		Dependency: d,
-		orderRepo:  repository.NewOrderRepository(d.DB),
-	}
 }
 
 func (o orderService) Save(i int) int {

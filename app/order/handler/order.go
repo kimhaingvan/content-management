@@ -71,7 +71,6 @@ func (h *OrderHandler) SaveOrderHandler(order *admin.Resource) func(interface{},
 		}
 		return nil
 	}
-
 }
 
 func (h *OrderHandler) DeleteOrderHandler(order *admin.Resource) func(interface{}, *qor.Context) error {

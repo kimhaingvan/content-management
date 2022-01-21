@@ -1,6 +1,7 @@
 package main
 
 import (
+	"content-management/app/loanguideline"
 	"content-management/app/order"
 	"content-management/cmd/content-server/build"
 	"content-management/core/config"
@@ -115,6 +116,12 @@ func configureApp(app *application.Application) {
 		Application: app,
 	})
 
-	application.Use(orderServer)
+	// Loan guideline
+	loanGuidelineServer := loanguideline.NewLoanGuideLineServer(&loanguideline.Config{
+		Prefix:      "/loan_guideline",
+		Application: app,
+	})
+
+	application.Use(orderServer, loanGuidelineServer)
 	app.Router.Mount("/admin", app.Admin.NewServeMux("/admin"))
 }
