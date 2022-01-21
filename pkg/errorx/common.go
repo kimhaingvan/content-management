@@ -2,21 +2,21 @@ package errorx
 
 var (
 	// ErrInternal ...
-	ErrInternal = Error("1", 500, "internal_server_error", "Lỗi từ hệ thống internal")
+	ErrInternal = Error("1", 500, "internal_server_error", "Error from internal system")
 	// ErrDatabase ...
-	ErrDatabase = Error("2", 500, "database_error", "Lỗi từ cơ sở dữ liệu database")
+	ErrDatabase = Error("2", 500, "database_error", "Error from database database")
 	// ErrInvalidParameter ...
-	ErrInvalidParameter = Error("3", 400, "invalid_parameter", "Parameter không hợp lệ")
+	ErrInvalidParameter = Error("3", 400, "invalid_parameter", "Invalid parameter")
 	// ErrAuthFailure ...
-	ErrAuthFailure = Error("4", 401, "auth_failure", "Xác thực thất bại")
+	ErrAuthFailure = Error("4", 401, "auth_failure", "Authentication failed")
 	// ErrAuthority ...
-	ErrForbidden = Error("5", 403, "authority_error", "Không thể truy cập đến tài nguyên")
+	ErrForbidden = Error("5", 403, "authority_error", "Unable to access resource")
 	// ErrInvalidRefreshToken ...
-	ErrInvalidRefreshToken = Error("6", 401, "invalid_refresh_token", "Refresh token không hợp lệ")
+	ErrInvalidRefreshToken = Error("6", 401, "invalid_refresh_token", "Refresh token is not valid")
 	// ErrRefreshTokenExpired ...
-	ErrRefreshTokenExpired = Error("7", 401, "refresh_token_expired", "Refresh token hết hạn")
+	ErrRefreshTokenExpired = Error("7", 401, "refresh_token_expired", "Refresh token expires")
 	// ErrInvalidRefreshToken ...
-	ErrInvalidAccessToken = Error("8", 401, "invalid_access_token", "Access token không hợp lệ")
+	ErrInvalidAccessToken = Error("8", 401, "invalid_access_token", "Invalid access token")
 	// ErrRefreshTokenExpired ...
-	ErrAccessTokenExpired = Error("9", 401, "access_token_expired", "Access token hết hạn")
+	ErrAccessTokenExpired = Error("9", 401, "access_token_expired", "Access Token Expired")
 )
