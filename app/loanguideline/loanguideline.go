@@ -34,7 +34,7 @@ func NewLoanGuideLineServer(config *Config) *LoanGuideLineServer {
 // ConfigureApplication configure application
 func (o *LoanGuideLineServer) Configure() {
 	// ViewPaths tính từ file main.go
-	o.handler.View = render.New(&render.Config{AssetFileSystem: o.Application.AssetFS.NameSpace("orders")}, "app/order/view")
+	o.handler.View = render.New(&render.Config{AssetFileSystem: o.Application.AssetFS.NameSpace("orders")}, "app/loanguideline/view")
 	funcmapmaker.AddFuncMapMaker(o.handler.View)
 
 	qorAdmin := o.Application.Admin
@@ -66,6 +66,9 @@ func (o *LoanGuideLineServer) configure(qorAdmin *admin.Admin) {
 			PageCount:  0,
 		},
 	)
+
+	loanGuideline.UseTheme("fancy")
+
 
 	for _, meta := range Metas {
 		loanGuideline.Meta(meta)

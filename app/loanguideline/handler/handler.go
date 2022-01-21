@@ -56,7 +56,9 @@ func (h *LoanGuidelineHandler) GetAllLoanGuidelineHandler(ctx *admin.Context) {
 	var data []model.LoanGuideline
 	result := ctx.GetDB().Find(&data)
 	if result.Error != nil {
-		httpx.WriteError(ctx.Request.Context(), ctx.Writer, errors.New("no data"))
+		var err = result.Error.Error()
+		httpx.WriteError(ctx.Request.Context(), ctx.Writer, errors.New(err))
+		return
 	}
 	httpx.WriteReponse(context.Background(), ctx.Writer, 200, map[string]interface{}{"Orders": data})
 }
@@ -65,12 +67,14 @@ func (h *LoanGuidelineHandler) GetByIdLoanGuidelineHandler(ctx *admin.Context) {
 	var data []model.LoanGuideline
 	id, err := strconv.Atoi(ctx.Request.URL.Query().Get("id"))
 	if err != nil {
-		httpx.WriteError(ctx.Request.Context(), ctx.Writer, errors.New("no data"))
+		httpx.WriteError(ctx.Request.Context(), ctx.Writer, errors.New(err.Error()))
 		return
 	}
 	result := ctx.GetDB().Where("id = ?", id).Find(&data)
 	if result.Error != nil {
-		httpx.WriteError(ctx.Request.Context(), ctx.Writer, errors.New("no data"))
+		var err = result.Error.Error()
+		httpx.WriteError(ctx.Request.Context(), ctx.Writer, errors.New(err))
+		return
 	}
 	httpx.WriteReponse(context.Background(), ctx.Writer, 200, map[string]interface{}{"Orders": data})
 }

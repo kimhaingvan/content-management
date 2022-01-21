@@ -18,6 +18,11 @@ type orderService struct {
 	orderRepo repository.OrderRepository
 }
 
+type Dependency struct {
+	DB          *gorm.DB
+	MinioClient *minio.Client
+}
+
 func NewOrderService(d *Dependency) OrderService {
 	return &orderService{
 		Dependency: d,
@@ -41,11 +46,6 @@ func (o *orderService) UploadFile(ctx context.Context, args *UploadObjectArgs) (
 		return "", err
 	}
 	return res.URL, nil
-}
-
-type Dependency struct {
-	DB          *gorm.DB
-	MinioClient *minio.Client
 }
 
 func (o orderService) Save(i int) int {

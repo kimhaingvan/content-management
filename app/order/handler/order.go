@@ -55,7 +55,9 @@ func (h *OrderHandler) GetAllOrder(ctx *admin.Context) {
 	var orders []model.Order
 	result := ctx.GetDB().Find(&orders)
 	if result.Error != nil {
-		httpx.WriteError(ctx.Request.Context(), ctx.Writer, errors.New("no data"))
+		var err = result.Error.Error()
+		httpx.WriteError(ctx.Request.Context(), ctx.Writer, errors.New(err))
+		return
 	}
 	httpx.WriteReponse(context.Background(), ctx.Writer, 200, map[string]interface{}{"Orders": orders})
 }
@@ -64,13 +66,14 @@ func (h *OrderHandler) GetByIdOrder(ctx *admin.Context) {
 	var order model.Order
 	id, err := strconv.Atoi(ctx.Request.URL.Query().Get("id"))
 	if err != nil {
-		httpx.WriteError(ctx.Request.Context(), ctx.Writer, errors.New("no data"))
+		httpx.WriteError(ctx.Request.Context(), ctx.Writer, errors.New(err.Error()))
 		return
 	}
 
 	result := ctx.GetDB().Where("id = ?", id).Find(&order)
 	if result.Error != nil {
-		httpx.WriteError(ctx.Request.Context(), ctx.Writer, errors.New("no data"))
+		var err = result.Error.Error()
+		httpx.WriteError(ctx.Request.Context(), ctx.Writer, errors.New(err))
 		return
 	}
 	httpx.WriteReponse(context.Background(), ctx.Writer, 200, map[string]interface{}{"Order": order})
