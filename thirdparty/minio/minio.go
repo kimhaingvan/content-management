@@ -54,10 +54,8 @@ func (c *Client) UploadFile(ctx context.Context, args *UploadObjectArgs) (*Uploa
 			fileSize = v.Size
 			contentTypes := v.Header["Content-Type"]
 			if len(contentTypes) > 0 && contentTypes[0] != "" {
-				if len(contentTypes) > 0 && contentTypes[0] != "" {
-					for _, t := range contentTypes {
-						contentType = t
-					}
+				for _, t := range contentTypes {
+					contentType = t
 				}
 			}
 		}
