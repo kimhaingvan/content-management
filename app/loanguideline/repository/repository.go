@@ -9,9 +9,7 @@ type loanGuideLineRepository struct {
 	db *gorm.DB
 }
 
-func NewLoanGuideLineRepository(
-	db *gorm.DB,
-) LoanGuideLineRepository {
+func NewLoanGuideLineRepository(db *gorm.DB) LoanGuideLineRepository {
 	return &loanGuideLineRepository{
 		db: db,
 	}
