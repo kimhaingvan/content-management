@@ -5,13 +5,13 @@ import (
 	"content-management/app/order/service"
 	"content-management/pkg/httpreq"
 	"content-management/pkg/httpx"
+	"context"
 	"errors"
 	"fmt"
-
-	"github.com/qor/qor/resource"
-
 	"github.com/jinzhu/gorm"
+	"github.com/qor/qor/resource"
 	"github.com/qor/roles"
+	"strconv"
 
 	"go.elastic.co/apm"
 
@@ -49,6 +49,32 @@ func (h *OrderHandler) TestError(ctx *admin.Context) {
 	if err != nil {
 		httpx.WriteError(ctx.Request.Context(), ctx.Writer, errors.New("tesst chơi"))
 	}
+}
+
+func (h *OrderHandler) GetAllOrder(ctx *admin.Context) {
+	var orders []model.Order
+
+	result := ctx.GetDB().Find(&orders)
+	if result.Error != nil {
+		httpx.WriteError(ctx.Request.Context(), ctx.Writer, errors.New("no data"))
+	}
+	httpx.WriteReponse(context.Background(), ctx.Writer, 200, map[string]interface{}{"Orders": orders})
+}
+
+func (h *OrderHandler) GetByIdOrder(ctx *admin.Context) {
+	var order model.Order
+	id, err := strconv.Atoi(ctx.Request.URL.Query().Get("id"))
+	if err != nil {
+		httpx.WriteError(ctx.Request.Context(), ctx.Writer, errors.New("no data"))
+		return
+	}
+
+	result := ctx.GetDB().Where("id = ?", id).Find(&order)
+	if result.Error != nil {
+		httpx.WriteError(ctx.Request.Context(), ctx.Writer, errors.New("no data"))
+		return
+	}
+	httpx.WriteReponse(context.Background(), ctx.Writer, 200, map[string]interface{}{"Order": order})
 }
 
 func (h *OrderHandler) SaveOrderHandler(order *admin.Resource) func(interface{}, *qor.Context) error {

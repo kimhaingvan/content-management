@@ -46,6 +46,8 @@ func (o *OrderServer) Configure() {
 func (o *OrderServer) router(router *admin.Router) {
 	router.Post(fmt.Sprintf("%v/TestFunc", o.Prefix), o.orderHandler.TestSample)
 	router.Post(fmt.Sprintf("%v/TestError", o.Prefix), o.orderHandler.TestError)
+	router.Get(fmt.Sprintf("%v/all", o.Prefix), o.orderHandler.GetAllOrder)
+	router.Get(fmt.Sprintf("%v/", o.Prefix), o.orderHandler.GetByIdOrder)
 }
 
 // configure configure order admin interface

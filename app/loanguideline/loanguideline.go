@@ -5,7 +5,7 @@ import (
 	"content-management/model"
 	"content-management/pkg/application"
 	"content-management/pkg/utils/funcmapmaker"
-
+	"fmt"
 	"github.com/qor/admin"
 	"github.com/qor/render"
 )
@@ -45,6 +45,9 @@ func (o *LoanGuideLineServer) Configure() {
 func (o *LoanGuideLineServer) router(router *admin.Router) {
 	//router.Post(fmt.Sprintf("%v/TestFunc", o.Prefix), o.handler.TestSample)
 	//router.Post(fmt.Sprintf("%v/TestError", o.Prefix), o.handler.TestError)
+	router.Get(fmt.Sprintf("%v", o.Prefix), o.handler.GetAllLoanGuidelineHandler)
+	router.Get(fmt.Sprintf("%v", o.Prefix), o.handler.GetByIdLoanGuidelineHandler)
+
 }
 
 // configure configure loan guideline admin interface

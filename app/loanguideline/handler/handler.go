@@ -3,7 +3,11 @@ package handler
 import (
 	"content-management/app/loanguideline/service"
 	"content-management/model"
+	"content-management/pkg/httpx"
+	"context"
+	"errors"
 	"fmt"
+	"strconv"
 
 	"github.com/k0kubun/pp"
 
@@ -46,4 +50,27 @@ func (h *LoanGuidelineHandler) SaveLoanGuidelineHandler(loanGuideline *admin.Res
 		}
 		return nil
 	}
+}
+
+func (h *LoanGuidelineHandler) GetAllLoanGuidelineHandler(ctx *admin.Context) {
+	var data []model.LoanGuideline
+	result := ctx.GetDB().Find(&data)
+	if result.Error != nil {
+		httpx.WriteError(ctx.Request.Context(), ctx.Writer, errors.New("no data"))
+	}
+	httpx.WriteReponse(context.Background(), ctx.Writer, 200, map[string]interface{}{"Orders": data})
+}
+
+func (h *LoanGuidelineHandler) GetByIdLoanGuidelineHandler(ctx *admin.Context) {
+	var data []model.LoanGuideline
+	id, err := strconv.Atoi(ctx.Request.URL.Query().Get("id"))
+	if err != nil {
+		httpx.WriteError(ctx.Request.Context(), ctx.Writer, errors.New("no data"))
+		return
+	}
+	result := ctx.GetDB().Where("id = ?", id).Find(&data)
+	if result.Error != nil {
+		httpx.WriteError(ctx.Request.Context(), ctx.Writer, errors.New("no data"))
+	}
+	httpx.WriteReponse(context.Background(), ctx.Writer, 200, map[string]interface{}{"Orders": data})
 }
