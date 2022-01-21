@@ -53,7 +53,6 @@ func (h *OrderHandler) TestError(ctx *admin.Context) {
 
 func (h *OrderHandler) GetAllOrder(ctx *admin.Context) {
 	var orders []model.Order
-
 	result := ctx.GetDB().Find(&orders)
 	if result.Error != nil {
 		httpx.WriteError(ctx.Request.Context(), ctx.Writer, errors.New("no data"))
