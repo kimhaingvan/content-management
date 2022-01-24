@@ -1,8 +1,8 @@
 package loanguideline
 
 import (
-	"content-management/app/loanguideline/model"
 	"content-management/lib/qor/metax"
+	"content-management/model"
 
 	"github.com/qor/admin"
 )

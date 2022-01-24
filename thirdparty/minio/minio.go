@@ -1,6 +1,7 @@
 package minio
 
 import (
+	"content-management/pkg/errorx"
 	"content-management/pkg/log"
 	"context"
 	"fmt"
@@ -67,7 +68,7 @@ func (c *Client) UploadFile(ctx context.Context, args *UploadObjectArgs) (*Uploa
 	mediaObj.Url = fileURL
 	file, err := mediaObj.FileHeader.Open()
 	if err != nil {
-		return nil, nil
+		return nil, errorx.ErrInternal(err)
 	}
 	defer file.Close()
 
@@ -77,7 +78,7 @@ func (c *Client) UploadFile(ctx context.Context, args *UploadObjectArgs) (*Uploa
 		UserMetadata: args.UserMetaData,
 	})
 	if err != nil {
-		return nil, nil
+		return nil, errorx.ErrInternal(err)
 	}
 	return &UploadObjectResponse{
 		URL: fileURL,

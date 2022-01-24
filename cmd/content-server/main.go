@@ -1,8 +1,6 @@
 package main
 
 import (
-	"content-management/app/loanguideline"
-	"content-management/app/order"
 	"content-management/cmd/content-server/build"
 	"content-management/core/config"
 	"content-management/pkg/application"
@@ -110,18 +108,12 @@ func shutdownGracefully(s *http.Server) {
 }
 
 func configureApp(app *application.Application) {
-	// Order
-	orderServer := order.NewOrderServer(&order.Config{
-		Prefix:      "/order",
-		Application: app,
-	})
-
 	// Loan guideline
-	loanGuidelineServer := loanguideline.NewLoanGuideLineServer(&loanguideline.Config{
+	loanGuidelineServer := build.NewLoanGuideLineServer(&build.Config{
 		Prefix:      "/loan_guideline",
 		Application: app,
 	})
 
-	application.Use(orderServer, loanGuidelineServer)
+	application.Use(loanGuidelineServer)
 	app.Router.Mount("/admin", app.Admin.NewServeMux("/admin"))
 }

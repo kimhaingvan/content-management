@@ -7,6 +7,7 @@ require (
 	github.com/garyburd/redigo v1.6.3
 	github.com/gin-gonic/gin v1.7.7 // indirect
 	github.com/go-chi/chi v1.5.4
+	github.com/go-playground/validator/v10 v10.4.1 // indirect
 	github.com/go-resty/resty/v2 v2.7.0
 	github.com/google/go-cmp v0.5.6 // indirect
 	github.com/hashicorp/consul/api v1.12.0
