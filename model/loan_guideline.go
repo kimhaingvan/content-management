@@ -22,7 +22,7 @@ type LoanGuideline struct {
 	//PaymentAmount  float32
 	//Description    string `sql:"size:2000"`
 	//TrackingNumber *string
-	//File           media_library.MediaLibraryStorage `sql:"size:4294967295;" media_library:"url:/system/{{class}}/{{primary_key}}/{{column}}.{{extension}}"`
+	File media_library.MediaLibraryStorage `sql:"size:4294967295;" media_library:"url:/system/{{class}}/{{primary_key}}/{{column}}.{{extension}}"`
 	//ShippedAt      *time.Time
 	//ReturnedAt     *time.Time
 	//CancelledAt    *time.Time

@@ -1,8 +1,9 @@
 package handler
 
 import (
+	"content-management/app/loanguideline/model"
 	"content-management/app/loanguideline/service"
-	"content-management/model"
+	"content-management/pkg/httpreq"
 	"content-management/pkg/httpx"
 	"context"
 	"errors"
@@ -32,19 +33,19 @@ func NewLoanGuideLineHandler(loanGuideLineService service.LoanGuideLineService) 
 func (h *LoanGuidelineHandler) SaveLoanGuidelineHandler(loanGuideline *admin.Resource) func(interface{}, *qor.Context) error {
 	return func(result interface{}, ctx *qor.Context) error {
 		trx := apm.DefaultTracer.StartTransaction(fmt.Sprintf("%v %v", ctx.Request.Method, ctx.Request.RequestURI), "request")
-		//trxCtx := apm.ContextWithTransaction(ctx.Request.Context(), trx)
+		trxCtx := apm.ContextWithTransaction(ctx.Request.Context(), trx)
 		defer trx.End()
 		mediaFile, _ := result.(*model.LoanGuideline)
 		pp.Println(mediaFile)
-		//if httpreq.HasMediaFile(ctx.Request) {
-		//	_, err := h.orderService.UploadFile(trxCtx, &service.UploadObjectArgs{
-		//		Form:         ctx.Request.MultipartForm,
-		//		MediaStorage: &mediaFile.File,
-		//	})
-		//	if err != nil {
-		//		return err
-		//	}
-		//}
+		if httpreq.HasMediaFile(ctx.Request) {
+			_, err := h.loanGuideLineService.UploadFile(trxCtx, &service.UploadObjectArgs{
+				Form:         ctx.Request.MultipartForm,
+				MediaStorage: &mediaFile.File,
+			})
+			if err != nil {
+				return err
+			}
+		}
 		if err := ctx.GetDB().Save(result).Error; err != nil {
 			return err
 		}
