@@ -71,7 +71,7 @@ var doc = `{
                 "parameters": [
                     {
                         "description": "Request",
-                        "name": "id",
+                        "name": "offset",
                         "in": "body",
                         "required": true,
                         "schema": {

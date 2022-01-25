@@ -57,6 +57,11 @@ hoặc
 $ ./recompile.bash
 ```
 
+You can run swagger
+
+    swag init -g .\app\loanguideline\handler\handler.go (handle.go is router)
+
+
 You should see the following message:
 
     HTTP server listening at :8011

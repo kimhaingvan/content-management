@@ -50,7 +50,7 @@ paths:
       parameters:
       - description: Request
         in: body
-        name: id
+        name: offset
         required: true
         schema:
           $ref: '#/definitions/loanguideline.GetListRequest'

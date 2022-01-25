@@ -43,7 +43,7 @@ func NewLoanGuideLineHandler(loanGuideLineService service.LoanGuideLineService) 
 // @host localhost:8081
 // @Accept  json
 // @Produce  json
-// @param id body loanguideline.GetListRequest true "Request".
+// @param limit offset body loanguideline.GetListRequest true "Request".
 // @Success 200 {array} map[string]interface{}
 // @Router /admin/loan_guideline/get_list [get]
 func (h *LoanGuidelineHandler) GetListHandler(ctx *admin.Context) {
