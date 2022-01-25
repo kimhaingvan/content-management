@@ -7,7 +7,7 @@ require (
 	github.com/garyburd/redigo v1.6.3
 	github.com/gin-gonic/gin v1.7.7 // indirect
 	github.com/go-chi/chi v1.5.4
-	github.com/go-playground/validator/v10 v10.4.1 // indirect
+	github.com/go-playground/validator/v10 v10.4.1
 	github.com/go-resty/resty/v2 v2.7.0
 	github.com/google/go-cmp v0.5.6 // indirect
 	github.com/hashicorp/consul/api v1.12.0
@@ -32,13 +32,15 @@ require (
 	github.com/qor/render v1.1.1
 	github.com/qor/roles v0.0.0-20201008080147-dcaf8a4646d8
 	github.com/qor/session v0.0.0-20170907035918-8206b0adab70
-	github.com/qor/validations v0.0.0-20171228122639-f364bca61b46
 	github.com/qor/wildcard_router v0.0.0-20171031035524-56710e5bb5a4
 	github.com/sirupsen/logrus v1.8.1
-	github.com/spf13/cobra v1.0.0
 	github.com/subosito/gotenv v1.2.0
+	github.com/swaggo/http-swagger v1.2.0
+	github.com/swaggo/swag v1.7.8
 	go.elastic.co/apm v1.15.0
 	go.elastic.co/apm/module/apmgorm v1.14.0
 	golang.org/x/crypto v0.0.0-20211215153901-e495a2d5b3d3 // indirect
-	golang.org/x/tools v0.1.7 // indirect
+	golang.org/x/net v0.0.0-20220121210141-e204ce36a2ba // indirect
+	golang.org/x/sys v0.0.0-20220114195835-da31bd327af9 // indirect
+	golang.org/x/tools v0.1.8 // indirect
 )

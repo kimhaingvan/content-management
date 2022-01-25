@@ -37,6 +37,15 @@ func NewLoanGuideLineHandler(loanGuideLineService service.LoanGuideLineService) 
 	}
 }
 
+// GetListHandler godoc
+// @Summary GetListHandler loan_guideline
+// @Description get list handler loan guideline
+// @host localhost:8081
+// @Accept  json
+// @Produce  json
+// @param id body loanguideline.GetListRequest true "Request".
+// @Success 200 {array} map[string]interface{}
+// @Router /admin/loan_guideline/get_list [get]
 func (h *LoanGuidelineHandler) GetListHandler(ctx *admin.Context) {
 	b, err := ioutil.ReadAll(ctx.Request.Body)
 	ctx.Request.Body = ioutil.NopCloser(bytes.NewBuffer(b))
@@ -64,6 +73,15 @@ func (h *LoanGuidelineHandler) GetListHandler(ctx *admin.Context) {
 	httpx.WriteReponse(context.Background(), ctx.Writer, http.StatusOK, res)
 }
 
+// GetHandler godoc
+// @Summary GetHandler loan guideline
+// @Description Get handler loan guideline
+// @host localhost:8081
+// @Accept  json
+// @Produce  json
+// @param id body loanguideline.GetRequest true "Request".
+//@Success 200 {array} map[string]interface{}
+// @Router /admin/loan_guideline/get [get]
 func (h *LoanGuidelineHandler) GetHandler(ctx *admin.Context) {
 	b, err := ioutil.ReadAll(ctx.Request.Body)
 	ctx.Request.Body = ioutil.NopCloser(bytes.NewBuffer(b))
