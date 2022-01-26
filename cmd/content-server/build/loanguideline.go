@@ -21,23 +21,25 @@ type Config struct {
 // App Loan guideline app
 type LoanGuideLineServer struct {
 	*Config
-	handler *handler.LoanGuidelineHandler
+	handler     *handler.LoanGuidelineHandler
+	handlerView *handler.LoanGuidelineViewHandler
 }
 
 // NewLoanGuideLineServer new loan guideline app
 func NewLoanGuideLineServer(config *Config) *LoanGuideLineServer {
 	loanGuideLineService := config.Application.Registry.NewLoanGuideLineService()
 	return &LoanGuideLineServer{
-		Config:  config,
-		handler: handler.NewLoanGuideLineHandler(loanGuideLineService),
+		Config:      config,
+		handler:     handler.NewLoanGuideLineHandler(loanGuideLineService),
+		handlerView: handler.NewLoanGuideLineViewHandler(loanGuideLineService),
 	}
 }
 
 // ConfigureApplication configure application
 func (o *LoanGuideLineServer) Configure() {
 	// ViewPaths tính từ file main.go
-	o.handler.View = render.New(&render.Config{AssetFileSystem: o.Application.AssetFS.NameSpace("orders")}, "app/loanguideline/view")
-	funcmapmaker.AddFuncMapMaker(o.handler.View)
+	o.handlerView.View = render.New(&render.Config{AssetFileSystem: o.Application.AssetFS.NameSpace("orders")}, "app/loanguideline/view")
+	funcmapmaker.AddFuncMapMaker(o.handlerView.View)
 
 	qorAdmin := o.Application.Admin
 	o.configure(qorAdmin)
@@ -108,10 +110,10 @@ func (o *LoanGuideLineServer) configure(qorAdmin *admin.Admin) {
 	//	order.SearchAttrs(model.SearchAttrs...)
 	//}
 
-	loanGuideline.SaveHandler = o.handler.SaveLoanGuidelineHandler(loanGuideline)
+	loanGuideline.SaveHandler = o.handlerView.SaveLoanGuidelineHandler(loanGuideline)
 	//order.DeleteHandler = o.orderHandler.DeleteOrderHandler(order)
-	loanGuideline.FindOneHandler = o.handler.FindOneHandler(loanGuideline)
-	loanGuideline.FindManyHandler = o.handler.FindManyHandler(loanGuideline)
+	loanGuideline.FindOneHandler = o.handlerView.FindOneHandler(loanGuideline)
+	loanGuideline.FindManyHandler = o.handlerView.FindManyHandler(loanGuideline)
 }
 
 var (
