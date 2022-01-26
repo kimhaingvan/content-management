@@ -2,7 +2,7 @@
 *.out
 *.test
 .DS_Store
-.idea
+*.idea
 .vscode
 __*
 _out

@@ -21,6 +21,7 @@ func New(c config.PostgresConfig) *Database {
 	if err != nil {
 		log.Fatal(err, nil, nil)
 	}
+	db.LogMode(true)
 	db.DB().SetMaxOpenConns(c.MaxOpenConns)
 	db.DB().SetMaxIdleConns(c.MaxIdleConns)
 	db.DB().SetConnMaxLifetime(time.Minute * 5)
