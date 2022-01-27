@@ -11,6 +11,7 @@ import (
 	"content-management/thirdparty/consul"
 	"context"
 	"fmt"
+	httpSwagger "github.com/swaggo/http-swagger"
 	"log"
 	"net/http"
 	"os"
@@ -66,6 +67,11 @@ func main() {
 		app.Router.Use(zipkinhttp.NewServerMiddleware(tracer, zipkinhttp.SpanName("Request")))
 		app.Router.Use(middleware.ZipkinMiddleware)
 		app.Router.Use(middleware.APILoggingMiddleware)
+
+		url := fmt.Sprintf("http://localhost:%d/swagger/doc.json", config.GetAppConfig().ServerPort)
+		app.Router.Get("/swagger/*", httpSwagger.Handler(
+			httpSwagger.URL(url),
+		))
 
 		configureApp(app)
 		go func() {

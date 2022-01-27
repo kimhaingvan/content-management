@@ -1,0 +1,68 @@
+definitions:
+  loanguideline.GetListRequest:
+    properties:
+      limit:
+        type: integer
+      offset:
+        type: integer
+    required:
+    - limit
+    - offset
+    type: object
+  loanguideline.GetRequest:
+    properties:
+      id:
+        type: integer
+    required:
+    - id
+    type: object
+info:
+  contact: {}
+paths:
+  /admin/loan_guideline/get:
+    get:
+      consumes:
+      - application/json
+      description: Get handler loan guideline
+      parameters:
+      - description: Request
+        in: body
+        name: id
+        required: true
+        schema:
+          $ref: '#/definitions/loanguideline.GetRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              additionalProperties: true
+              type: object
+            type: array
+      summary: GetHandler loan guideline
+  /admin/loan_guideline/get_list:
+    get:
+      consumes:
+      - application/json
+      description: get list handler loan guideline
+      parameters:
+      - description: Request
+        in: body
+        name: offset
+        required: true
+        schema:
+          $ref: '#/definitions/loanguideline.GetListRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              additionalProperties: true
+              type: object
+            type: array
+      summary: GetListHandler loan_guideline
+swagger: "2.0"
